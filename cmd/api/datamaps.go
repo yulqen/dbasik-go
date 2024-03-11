@@ -14,8 +14,7 @@ func (app *application) showDatamapHandler(w http.ResponseWriter, r *http.Reques
 	id := r.PathValue("id")
 	app.logger.Info("the id requested", "id", id)
 	id_int, err := strconv.ParseInt(id, 10, 64)
-	// TODO: Handle negative integers passed in the URL here
-	if err != nil {
+	if err != nil || id_int < 1 {
 		http.NotFound(w, r)
 		return
 	}
