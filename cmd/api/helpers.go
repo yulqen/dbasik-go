@@ -5,10 +5,13 @@ import (
 	"net/http"
 )
 
+// We want this so that our JSON is nested under a key at the top, e.g. "datamap:"...
+type envelope map[string]interface{}
+
 // writeJSON)Pretty() helper for sending responses - pretty prints output. This takes the destination http.ResponseWriter, the
 // HTTP status code to sned, the data to encode to JSON and a header map containing any additional
 // HTTP headers we want to include in the response.
-func (app *application) writeJSONPretty(w http.ResponseWriter, status int, data any, headers http.Header) error {
+func (app *application) writeJSONPretty(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	// Encode the data to JSON, returing the error if there was one.
 	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {

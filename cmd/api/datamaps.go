@@ -74,7 +74,7 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 	}
 	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	err = app.writeJSONPretty(w, http.StatusOK, dm, nil)
+	err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		http.Error(w, "Cannot write output from parsed CSV", http.StatusInternalServerError)
