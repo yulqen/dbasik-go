@@ -8,12 +8,16 @@ import (
 	"time"
 )
 
+// datamapLine holds the data parsed from each line of a submitted datamap CSV file.
+// The fields need to be exported otherwise they won't be included when encoding
+// the struct to json.
 type datamapLine struct {
 	Key     string `json:"key"`
 	Sheet   string `json:"sheet"`
 	Cellref string `json:"cellref"`
 }
 
+// datamap includes a slice of datamapLine objects alongside header metadata
 type datamap struct {
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
@@ -29,7 +33,13 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// get the uploaded file
+	// Get form values
+	dmName := r.FormValue("name")
+	app.logger.Info("obtain value from form", "name", dmName)
+	dmDesc := r.FormValue("description")
+	app.logger.Info("obtain value from form", "description", dmDesc)
+
+	// Get the uploaded file and name
 	file, _, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, "Missing file", http.StatusBadRequest)
@@ -62,9 +72,9 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 			Cellref: line[2],
 		})
 	}
-	dm = datamap{Name: "test-datamap", Description: "test description", Created: time.Now(), DMLs: dmls}
+	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	err = app.writeJSON(w, http.StatusOK, dm, nil)
+	err = app.writeJSONPretty(w, http.StatusOK, dm, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		http.Error(w, "Cannot write output from parsed CSV", http.StatusInternalServerError)
