@@ -1,11 +1,17 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 )
+
+type datamapLine struct {
+	Key     string
+	Sheet   string
+	Cellref string
+}
 
 func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the multipart form
@@ -23,39 +29,39 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 	}
 	defer file.Close()
 
-	// // create a new file on the server
-	// outFile, err := os.CreateTemp("", "uploaded_csv")
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-	// // clean up - we have to do this
-	// defer os.Remove(outFile.Name())
+	// parse the csv
+	reader := csv.NewReader(file)
+	var datamapLines []datamapLine
 
-	// // copy the uploaded file to the server file
-	// _, err = io.Copy(outFile, file)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
+	for {
+		line, err := reader.Read()
+		if err != nil {
+			if err.Error() == "EOF" {
+				break // end of file
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if len(line) != 3 {
+			http.Error(w, "Invalid CSV Format", http.StatusBadRequest)
+			return
+		}
 
-	// var b []byte // this doesn't work
-	// _, err = outFile.Read(b)
-	// if err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-	// fmt.Fprintf(w, string(b))
+		datamapLines = append(datamapLines, datamapLine{
+			Key:     line[0],
+			Sheet:   line[1],
+			Cellref: line[2],
+		})
+	}
 
-	// Read the contents of the file
-	fileBytes, err := io.ReadAll(file)
+	err = app.writeJSON(w, http.StatusOK, datamapLines, nil)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		app.logger.Debug("writing out csv", "err", err)
+		http.Error(w, "Cannot write output from parsed CSV", http.StatusInternalServerError)
 		return
 	}
-	// Write the file contents to the response
-	w.Header().Set("Content-Type", "text/csv") // Set the appropriate content type
-	w.Write(fileBytes)
+
+	// fmt.Fprintf(w, "file successfully uploaded")
 }
 
 func (app *application) showDatamapHandler(w http.ResponseWriter, r *http.Request) {
