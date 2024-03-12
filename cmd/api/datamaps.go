@@ -5,12 +5,20 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type datamapLine struct {
-	Key     string
-	Sheet   string
-	Cellref string
+	Key     string `json:"key"`
+	Sheet   string `json:"sheet"`
+	Cellref string `json:"cellref"`
+}
+
+type datamap struct {
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Created     time.Time     `json:"created"`
+	DMLs        []datamapLine `json:"datamap_lines"`
 }
 
 func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +39,8 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 
 	// parse the csv
 	reader := csv.NewReader(file)
-	var datamapLines []datamapLine
+	var dmls []datamapLine
+	var dm datamap
 
 	for {
 		line, err := reader.Read()
@@ -47,14 +56,15 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		datamapLines = append(datamapLines, datamapLine{
+		dmls = append(dmls, datamapLine{
 			Key:     line[0],
 			Sheet:   line[1],
 			Cellref: line[2],
 		})
 	}
+	dm = datamap{Name: "test-datamap", Description: "test description", Created: time.Now(), DMLs: dmls}
 
-	err = app.writeJSON(w, http.StatusOK, datamapLines, nil)
+	err = app.writeJSON(w, http.StatusOK, dm, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		http.Error(w, "Cannot write output from parsed CSV", http.StatusInternalServerError)
