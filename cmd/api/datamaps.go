@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -24,22 +23,39 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 	}
 	defer file.Close()
 
-	// create a new file on the server
-	outFile, err := os.Create("uploaded.csv")
+	// // create a new file on the server
+	// outFile, err := os.CreateTemp("", "uploaded_csv")
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	// // clean up - we have to do this
+	// defer os.Remove(outFile.Name())
+
+	// // copy the uploaded file to the server file
+	// _, err = io.Copy(outFile, file)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// var b []byte // this doesn't work
+	// _, err = outFile.Read(b)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	// fmt.Fprintf(w, string(b))
+
+	// Read the contents of the file
+	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer outFile.Close()
-
-	// copy the uploaded file to the server file
-	_, err = io.Copy(outFile, file)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	fmt.Fprintf(w, "File uploaded successfully")
+	// Write the file contents to the response
+	w.Header().Set("Content-Type", "text/csv") // Set the appropriate content type
+	w.Write(fileBytes)
 }
 
 func (app *application) showDatamapHandler(w http.ResponseWriter, r *http.Request) {
