@@ -29,8 +29,7 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 	// Parse the multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10Mb max
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		app.serverErrorResponse(w, r, err)
 	}
 
 	// Get form values
@@ -77,8 +76,7 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 	err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
-		http.Error(w, "Cannot write output from parsed CSV", http.StatusInternalServerError)
-		return
+		app.serverErrorResponse(w, r, err)
 	}
 
 	// fmt.Fprintf(w, "file successfully uploaded")
@@ -89,8 +87,7 @@ func (app *application) showDatamapHandler(w http.ResponseWriter, r *http.Reques
 	app.logger.Info("the id requested", "id", id)
 	id_int, err := strconv.ParseInt(id, 10, 64)
 	if err != nil || id_int < 1 {
-		http.NotFound(w, r)
-		return
+		app.notFoundResponse(w, r)
 	}
 	fmt.Fprintf(w, "show the details for datamap %d\n", id_int)
 }
