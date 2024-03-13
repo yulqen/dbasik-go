@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,9 +13,10 @@ import (
 // The fields need to be exported otherwise they won't be included when encoding
 // the struct to json.
 type datamapLine struct {
-	Key     string `json:"key"`
-	Sheet   string `json:"sheet"`
-	Cellref string `json:"cellref"`
+	Key      string `json:"key"`
+	Sheet    string `json:"sheet"`
+	DataType string `json:"datatype"`
+	Cellref  string `json:"cellref"`
 }
 
 // datamap includes a slice of datamapLine objects alongside header metadata
@@ -60,15 +62,16 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if len(line) != 3 {
+		if len(line) != 4 {
 			http.Error(w, "Invalid CSV Format", http.StatusBadRequest)
 			return
 		}
 
 		dmls = append(dmls, datamapLine{
-			Key:     line[0],
-			Sheet:   line[1],
-			Cellref: line[2],
+			Key:      line[0],
+			Sheet:    line[1],
+			DataType: line[2],
+			Cellref:  line[3],
 		})
 	}
 	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
@@ -90,4 +93,14 @@ func (app *application) showDatamapHandler(w http.ResponseWriter, r *http.Reques
 		app.notFoundResponse(w, r)
 	}
 	fmt.Fprintf(w, "show the details for datamap %d\n", id_int)
+}
+
+func (app *application) createDatamapLine(w http.ResponseWriter, r *http.Request) {
+	var input datamapLine
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+	fmt.Fprintf(w, "%v\n", input)
 }

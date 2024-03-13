@@ -8,6 +8,7 @@ func (app *application) routes() *http.ServeMux {
 
 	mux.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
 	mux.HandleFunc("POST /v1/datamaps", app.createDatamapHandler)
+	mux.HandleFunc("POST /v1/datamapline", app.createDatamapLine)
 	mux.HandleFunc("GET /v1/datamaps/{id}", app.showDatamapHandler)
 	return mux
 }
