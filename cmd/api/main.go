@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const version = "1.0.0"
+const version = "0.0.1"
 
 // holds the config for our application
 // We will read this from the command line flags when we run the application
