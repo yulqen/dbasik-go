@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS datamaps;
+DROP TABLE IF EXISTS datamap_lines;

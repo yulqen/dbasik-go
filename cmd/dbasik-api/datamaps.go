@@ -30,6 +30,7 @@ import (
 // The fields need to be exported otherwise they won't be included when encoding
 // the struct to json.
 type datamapLine struct {
+	ID       int64  `json:"id"`
 	Key      string `json:"key"`
 	Sheet    string `json:"sheet"`
 	DataType string `json:"datatype"`
@@ -38,6 +39,7 @@ type datamapLine struct {
 
 // datamap includes a slice of datamapLine objects alongside header metadata
 type datamap struct {
+	ID          int64         `json:"id"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Created     time.Time     `json:"created"`
@@ -85,10 +87,10 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 		}
 
 		dmls = append(dmls, datamapLine{
-			Key:      line[0],
-			Sheet:    line[1],
-			DataType: line[2],
-			Cellref:  line[3],
+			Key:      line[1],
+			Sheet:    line[2],
+			DataType: line[3],
+			Cellref:  line[4],
 		})
 	}
 	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}

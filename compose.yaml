@@ -1,12 +1,15 @@
 services:
   db:
-    image: postgres:16-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     ports:
       - 5432:5432
     environment:
       - POSTGRES_PASSWORD=secret
     volumes:
       - dbasik_data:/var/lib/postgresql/data
+      - ./migrations:/dbasik
   app:
     build:
       context: .

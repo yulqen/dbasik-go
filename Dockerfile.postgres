@@ -1,0 +1,12 @@
+FROM postgres:16-alpine
+
+WORKDIR /dbasik
+
+COPY migrations/ .
+
+# Install required dependencies (e.g., curl)
+RUN apk add --no-cache curl
+
+# Download and install the migrate binary
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/migrate.linux-amd64.tar.gz | tar xvz -C /usr/local/bin/ && chmod +x /usr/local/bin/migrate
+
