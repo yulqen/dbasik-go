@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - dbasik_data:/var/lib/postgresql/data
+  app:
+    build:
+      context: .
+    volumes:
+      - .:/app
+    restart: "unless-stopped"
+    command: >
+      sh -c "go run ./cmd/dbasik-api"
+    ports:
+      - 5000:5000
+    depends_on:
+      - db
+volumes:
+  dbasik_data:

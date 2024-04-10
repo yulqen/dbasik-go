@@ -7,4 +7,4 @@ RUN go mod download && go mod verify
 COPY . .
 RUN go build -v -o /usr/local/bin/app ./cmd/dbasik-api
 CMD ["app"]
-EXPOSE 4000
+EXPOSE 5000

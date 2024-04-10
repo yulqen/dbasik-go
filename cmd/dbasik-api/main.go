@@ -15,6 +15,9 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+// Package main is the entry point for dbasik.
+// It provides the main functionality for the dbasik application.
 package main
 
 import (
@@ -47,7 +50,7 @@ func main() {
 	var cfg config
 
 	// Read the flags into the config struct. Defaults are provided if none given.
-	flag.IntVar(&cfg.port, "port", 4000, "API server port")
+	flag.IntVar(&cfg.port, "port", 5000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	flag.Parse()
 
