@@ -21,12 +21,16 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 const version = "0.0.1"
@@ -36,6 +40,9 @@ const version = "0.0.1"
 type config struct {
 	port int
 	env  string
+	db   struct {
+		dsn string
+	}
 }
 
 // This application struct holds the dependencies for our HTTP handlers, helpers and
@@ -52,10 +59,20 @@ func main() {
 	// Read the flags into the config struct. Defaults are provided if none given.
 	flag.IntVar(&cfg.port, "port", 5000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://dbasik:dbasik@db/dbasik?sslmode=disable", "PostgreSQL DSN")
 	flag.Parse()
 
 	// Initialize a new structured logger which writes to stdout
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	// set up the database pool
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
+	logger.Info("database connection pool established")
 
 	// An instance of application struct, containing the config struct and the logger
 	app := &application{
@@ -77,7 +94,26 @@ func main() {
 
 	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env)
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	logger.Error(err.Error())
 	os.Exit(1)
+}
+
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// create a context with a 5 second timeout
+	// if the database hasn't connected within this time, there is a problem
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
