@@ -25,11 +25,13 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -56,10 +58,15 @@ func main() {
 	// Instance of config
 	var cfg config
 
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Cannot load .env file - is it present?")
+	}
+
 	// Read the flags into the config struct. Defaults are provided if none given.
 	flag.IntVar(&cfg.port, "port", 5000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://dbasik:dbasik@db/dbasik?sslmode=disable", "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("DBASIK_DB_DSN"), "PostgreSQL DSN")
 	flag.Parse()
 
 	// Initialize a new structured logger which writes to stdout
