@@ -6,3 +6,10 @@ run-container:
 
 run:
 	@docker compose up -d
+
+migrate:
+	docker exec -it dbasik-db-1 migrate -path=${DBASIK_DB_DSN} -database= up
+
+migrate-down:
+	docker exec -it dbasik-db-1 migrate -path=${DBASIK_DB_DSN} -database= down
+

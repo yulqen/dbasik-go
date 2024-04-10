@@ -18,13 +18,28 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 )
+
+// A custom err to return from our Get() method when looking up a datamap
+// that doesn't exist
+var (
+	ErrRecordNotFound = errors.New("record not found")
+)
+
+// A Models struct wraps the DatmapModel. We can add other models to this as
+// we progress
+type Models struct {
+	Datamaps     datamapModel
+	DatamapLines datamapLineModel
+}
 
 // datamapLine holds the data parsed from each line of a submitted datamap CSV file.
 // The fields need to be exported otherwise they won't be included when encoding
@@ -37,6 +52,10 @@ type datamapLine struct {
 	Cellref  string `json:"cellref"`
 }
 
+type datamapLineModel struct {
+	DB *sql.DB
+}
+
 // datamap includes a slice of datamapLine objects alongside header metadata
 type datamap struct {
 	ID          int64         `json:"id"`
@@ -46,13 +65,61 @@ type datamap struct {
 	DMLs        []datamapLine `json:"datamap_lines"`
 }
 
+type datamapModel struct {
+	DB *sql.DB
+}
+
+func NewModels(db *sql.DB) Models {
+	return Models{
+		Datamaps:     datamapModel{DB: db},
+		DatamapLines: datamapLineModel{DB: db},
+	}
+}
+
+func (m *datamapLineModel) Insert(dm datamap, dmls []datamapLine) (int, error) {
+	var datamapID int64
+	tx, err := m.DB.Begin()
+	if err != nil {
+		return 0, err
+	}
+	err = m.DB.QueryRow(`INSERT INTO datamaps (name, description, created)
+		 VALUES ($1, $2, CURRENT_TIMESTAMP)
+		 RETURNING id`, dm.Name, dm.Description).Scan(&datamapID)
+	if err != nil {
+		return 0, err
+	}
+
+	stmt, err := tx.Prepare(`INSERT INTO datamap_lines
+				(datamap_id, key, sheet, data_type, cellref)
+				VALUES ($1, $2, $3, $4, $5)`)
+	if err != nil {
+		return 0, err
+	}
+
+	defer stmt.Close()
+
+	for _, line := range dmls {
+		_, err := stmt.Exec(
+			int64(datamapID),
+			line.Key,
+			line.Sheet,
+			line.DataType,
+			line.Cellref)
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+	}
+	tx.Commit()
+	return int(datamapID), nil
+}
+
 func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the multipart form
 	err := r.ParseMultipartForm(10 << 20) // 10Mb max
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
-
 	// Get form values
 	dmName := r.FormValue("name")
 	app.logger.Info("obtain value from form", "name", dmName)
@@ -87,19 +154,34 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 		}
 
 		dmls = append(dmls, datamapLine{
-			Key:      line[1],
-			Sheet:    line[2],
-			DataType: line[3],
-			Cellref:  line[4],
+			ID:       0,
+			Key:      line[0],
+			Sheet:    line[1],
+			DataType: line[2],
+			Cellref:  line[3],
 		})
+
 	}
 	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
+	// save to the database
+	_, err = app.models.DatamapLines.Insert(dm, dmls)
 	if err != nil {
-		app.logger.Debug("writing out csv", "err", err)
-		app.serverErrorResponse(w, r, err)
+		http.Error(w, "Cannot save to database", http.StatusBadRequest)
+		return
 	}
+
+}
+
+func (app *application) getJSONForDatamap(w http.ResponseWriter, r *http.Request) {
+	// Get the DM out of the database
+	// dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
+
+	// err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
+	// if err != nil {
+	// 	app.logger.Debug("writing out csv", "err", err)
+	// 	app.serverErrorResponse(w, r, err)
+	// }
 
 	// fmt.Fprintf(w, "file successfully uploaded")
 }

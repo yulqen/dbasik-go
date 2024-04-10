@@ -55,6 +55,7 @@ type config struct {
 type application struct {
 	config config
 	logger *slog.Logger
+	models Models
 }
 
 func main() {
@@ -94,6 +95,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: NewModels(db),
 	}
 
 	// Declare an http server which listens provided in the config struct and has

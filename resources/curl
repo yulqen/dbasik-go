@@ -1,1 +1,2 @@
 curl -X POST -F "file=@./resources/datamap.csv" -F "name=bobbins" -F "description=This is a long description of the datamap." http://localhost:4000/v1/datamaps|jq > /tmp/dm.json
+curl -X POST -F "file=@./resources/datamap.csv" -F "name=bobbins" -F "description=This is a long description of the datamap." http://localhost:5000/v1/datamaps
