@@ -120,6 +120,64 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+
+	// Get form values
+	dmName := r.FormValue("name")
+	app.logger.Info("obtain value from form", "name", dmName)
+	dmDesc := r.FormValue("description")
+	app.logger.Info("obtain value from form", "description", dmDesc)
+
+	// Get the uploaded file and name
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, "Missing file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// parse the csv
+	reader := csv.NewReader(file)
+	var dmls []datamapLine
+	var dm datamap
+
+	for {
+		line, err := reader.Read()
+		if err != nil {
+			if err.Error() == "EOF" {
+				break // end of file
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if len(line) != 4 {
+			http.Error(w, "Invalid CSV Format", http.StatusBadRequest)
+			return
+		}
+
+		dmls = append(dmls, datamapLine{
+			Key:      line[0],
+			Sheet:    line[1],
+			DataType: line[2],
+			Cellref:  line[3],
+		})
+	}
+	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
+
+	err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
+	if err != nil {
+		app.logger.Debug("writing out csv", "err", err)
+		app.serverErrorResponse(w, r, err)
+	}
+
+	fmt.Fprintf(w, "file successfully uploaded")
+}
+
+func (app *application) saveDatamapHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10Mb max
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 	// Get form values
 	dmName := r.FormValue("name")
 	app.logger.Info("obtain value from form", "name", dmName)
