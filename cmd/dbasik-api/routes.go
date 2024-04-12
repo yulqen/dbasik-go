@@ -25,6 +25,7 @@ func (app *application) routes() *http.ServeMux {
 
 	mux.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
 	mux.HandleFunc("GET /v1/getdatamap/{id}", app.getJSONForDatamap) // TODO: not yet implemented
+	mux.HandleFunc("POST /v1/return", app.createReturnHandler)
 	mux.HandleFunc("POST /v1/datamapsave", app.saveDatamapHandler)
 	mux.HandleFunc("POST /v1/datamap", app.createDatamapHandler)
 	mux.HandleFunc("POST /v1/datamapline", app.createDatamapLine)
