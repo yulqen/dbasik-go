@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-// A custom err to return from our Get() method when looking up a datamap
+// ErrRecordNotFound A custom err to return from our Get() method when looking up a Datamap
 // that doesn't exist
 var (
 	ErrRecordNotFound = errors.New("record not found")
@@ -36,35 +36,37 @@ type Models struct {
 	DatamapLines datamapLineModel
 }
 
-// datamapLine holds the data parsed from each line of a submitted datamap CSV file.
+// DatamapLine holds the data parsed from each line of a submitted Datamap CSV file.
 // The fields need to be exported otherwise they won't be included when encoding
 // the struct to json.
-type datamapLine struct {
+type DatamapLine struct {
 	ID       int64  `json:"id"`
 	Key      string `json:"key"`
 	Sheet    string `json:"sheet"`
 	DataType string `json:"datatype"`
-	Cellref  string `json:"cellref"`
+	CellRef  string `json:"cellref"`
 }
 
 type datamapLineModel struct {
 	DB *sql.DB
 }
 
-// datamap includes a slice of datamapLine objects alongside header metadata
-type datamap struct {
+// Datamap includes a slice of DatamapLine objects alongside header metadata
+type Datamap struct {
 	ID          int64         `json:"id"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Created     time.Time     `json:"created"`
-	DMLs        []datamapLine `json:"datamap_lines"`
+	DMLs        []DatamapLine `json:"datamap_lines"`
 }
 
 type datamapModel struct {
 	DB *sql.DB
 }
 
-func GetSheetsFromDM(dm datamap) []string {
+// GetSheetsFromDM extracts a set of sheet names from a Datamap struct
+func GetSheetsFromDM(dm Datamap) []string {
+	// this is basically how sets are done in Go - see https://www.sohamkamani.com/golang/sets/
 	sheets := map[string]struct{}{}
 	for _, dml := range dm.DMLs {
 		sheets[dml.Sheet] = struct{}{}
@@ -83,7 +85,7 @@ func NewModels(db *sql.DB) Models {
 	}
 }
 
-func (m *datamapLineModel) Insert(dm datamap, dmls []datamapLine) (int, error) {
+func (m *datamapLineModel) Insert(dm Datamap, dmls []DatamapLine) (int, error) {
 	var datamapID int64
 	tx, err := m.DB.Begin()
 	if err != nil {
@@ -111,7 +113,7 @@ func (m *datamapLineModel) Insert(dm datamap, dmls []datamapLine) (int, error) {
 			line.Key,
 			line.Sheet,
 			line.DataType,
-			line.Cellref)
+			line.CellRef)
 		if err != nil {
 			tx.Rollback()
 			return 0, err

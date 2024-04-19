@@ -20,9 +20,19 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"regexp"
 )
 
-// We want this so that our JSON is nested under a key at the top, e.g. "datamap:"...
+// validateSpreadsheetCell checks that the cellRef is in a valid format
+func validateSpreadsheetCell(cellRef string) bool {
+	pattern := `^[A-Z]+[1-9][0-9]*$`
+
+	regExp := regexp.MustCompile(pattern)
+
+	return regExp.MatchString(cellRef)
+}
+
+// We want this so that our JSON is nested under a key at the top, e.g. "Datamap:"...
 type envelope map[string]interface{}
 
 // writeJSON)Pretty() helper for sending responses - pretty prints output. This takes the destination http.ResponseWriter, the

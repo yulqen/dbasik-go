@@ -53,7 +53,7 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 
 	// parse the csv
 	reader := csv.NewReader(file)
-	var dmls []datamapLine
+	var dmls []DatamapLine
 
 	for {
 		line, err := reader.Read()
@@ -69,16 +69,16 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		dmls = append(dmls, datamapLine{
+		dmls = append(dmls, DatamapLine{
 			Key:      line[0],
 			Sheet:    line[1],
 			DataType: line[2],
-			Cellref:  line[3],
+			CellRef:  line[3],
 		})
 	}
-	dm := datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
+	dm := Datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	// Parse the XLSX file based on the datamap...
+	// Parse the XLSX file based on the Datamap...
 	// open an existing file
 	wb, err := xlsx.OpenFile(dst.Name())
 	if err != nil {
@@ -95,7 +95,7 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 
 	//Here is where we parse our files.
 
-	err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
+	err = app.writeJSONPretty(w, http.StatusOK, envelope{"Datamap": dm}, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		app.serverErrorResponse(w, r, err)
@@ -128,8 +128,8 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 
 	// parse the csv
 	reader := csv.NewReader(file)
-	var dmls []datamapLine
-	var dm datamap
+	var dmls []DatamapLine
+	var dm Datamap
 
 	for {
 		line, err := reader.Read()
@@ -145,16 +145,16 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		dmls = append(dmls, datamapLine{
+		dmls = append(dmls, DatamapLine{
 			Key:      line[0],
 			Sheet:    line[1],
 			DataType: line[2],
-			Cellref:  line[3],
+			CellRef:  line[3],
 		})
 	}
-	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
+	dm = Datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
+	err = app.writeJSONPretty(w, http.StatusOK, envelope{"Datamap": dm}, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		app.serverErrorResponse(w, r, err)
@@ -185,8 +185,8 @@ func (app *application) saveDatamapHandler(w http.ResponseWriter, r *http.Reques
 
 	// parse the csv
 	reader := csv.NewReader(file)
-	var dmls []datamapLine
-	var dm datamap
+	var dmls []DatamapLine
+	var dm Datamap
 
 	for {
 		line, err := reader.Read()
@@ -202,16 +202,16 @@ func (app *application) saveDatamapHandler(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		dmls = append(dmls, datamapLine{
+		dmls = append(dmls, DatamapLine{
 			ID:       0,
 			Key:      line[0],
 			Sheet:    line[1],
 			DataType: line[2],
-			Cellref:  line[3],
+			CellRef:  line[3],
 		})
 
 	}
-	dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
+	dm = Datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
 	// save to the database
 	_, err = app.models.DatamapLines.Insert(dm, dmls)
@@ -224,9 +224,9 @@ func (app *application) saveDatamapHandler(w http.ResponseWriter, r *http.Reques
 
 func (app *application) getJSONForDatamap(w http.ResponseWriter, r *http.Request) {
 	// Get the DM out of the database
-	// dm = datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
+	// dm = Datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	// err = app.writeJSONPretty(w, http.StatusOK, envelope{"datamap": dm}, nil)
+	// err = app.writeJSONPretty(w, http.StatusOK, envelope{"Datamap": dm}, nil)
 	// if err != nil {
 	// 	app.logger.Debug("writing out csv", "err", err)
 	// 	app.serverErrorResponse(w, r, err)
@@ -242,11 +242,11 @@ func (app *application) showDatamapHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil || id_int < 1 {
 		app.notFoundResponse(w, r)
 	}
-	fmt.Fprintf(w, "show the details for datamap %d\n", id_int)
+	fmt.Fprintf(w, "show the details for Datamap %d\n", id_int)
 }
 
 func (app *application) createDatamapLine(w http.ResponseWriter, r *http.Request) {
-	var input datamapLine
+	var input DatamapLine
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		app.errorResponse(w, r, http.StatusBadRequest, err.Error())
