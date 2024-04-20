@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"fmt"
 	"github.com/tealeg/xlsx/v3"
 	"path/filepath"
@@ -133,6 +134,29 @@ func (fp *DirectoryFilePackage) Prepare() ([]string, error) {
 	return files, nil
 }
 
+type ZipFilePackage struct {
+	FilePath string
+}
+
+func (fp *ZipFilePackage) Prepare() ([]string, error) {
+	// return a slice of the files from inside the zip file pointed to by fh.FilePath
+	// and an error if any
+	files, err := zip.OpenReader(fp.FilePath)
+	if err != nil {
+		return nil, err
+	}
+	defer files.Close()
+	out := []string{}
+	for _, file := range files.File {
+		out = append(out, file.Name)
+	}
+	return out, nil
+}
+
 func NewDirectoryFilePackage(filePath string) *DirectoryFilePackage {
 	return &DirectoryFilePackage{FilePath: filePath}
+}
+
+func NewZipFilePackage(filePath string) *ZipFilePackage {
+	return &ZipFilePackage{FilePath: filePath}
 }

@@ -179,3 +179,15 @@ func TestPrepareFiles(t *testing.T) {
 		t.Errorf("Prepare() did not return ../../testdata/valid_excel.xlsx")
 	}
 }
+
+func TestUnzipFiles(t *testing.T) {
+	fp := NewZipFilePackage("../../testdata/test.zip")
+	files, err := fp.Prepare()
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(files)
+	if !slices.Contains(files, "valid_excel.xlsx") {
+		t.Errorf("Prepare() did not return test.xlsx")
+	}
+}
