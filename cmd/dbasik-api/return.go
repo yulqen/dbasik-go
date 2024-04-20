@@ -58,20 +58,6 @@ func NewReturn(name string, dm *Datamap, returnLines []ReturnLine) (*Return, err
 	}, nil
 }
 
-//func cellVisitor(c *xlsx.Cell) error {
-//	value, err := c.FormattedValue()
-//	if err != nil {
-//		fmt.Println(err.Error())
-//	} else {
-//		fmt.Printf("Sheet: %s, Cell value: %s\n", c.Row.Sheet.Name, value)
-//	}
-//	return err
-//}
-
-//func rowVisitor(r *xlsx.Row) error {
-//	return r.ForEachCell(cellVisitor, xlsx.SkipEmptyCells)
-//}
-
 func ParseXLSX(filePath string, dm *Datamap) (*Return, error) {
 	// Use tealeg/xlsx to parse the Excel file
 	wb, err := xlsx.OpenFile(filePath)
@@ -127,4 +113,26 @@ func contains(slice []string, str string) bool {
 		}
 	}
 	return false
+}
+
+type FilePreparer interface {
+	Prepare(filePath string) error
+}
+
+type DirectoryFilePackage struct {
+	FilePath string
+}
+
+func (fp *DirectoryFilePackage) Prepare() ([]string, error) {
+	// return a slice of the files inside the directory pointed to by fh.FilePath
+	// and an error if any
+	files, err := filepath.Glob(fp.FilePath + "/*")
+	if err != nil {
+		return nil, err
+	}
+	return files, nil
+}
+
+func NewDirectoryFilePackage(filePath string) *DirectoryFilePackage {
+	return &DirectoryFilePackage{FilePath: filePath}
 }

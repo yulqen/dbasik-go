@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 )
@@ -164,5 +165,17 @@ func TestParseXLSX(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestPrepareFiles(t *testing.T) {
+	fp := NewDirectoryFilePackage("../../testdata")
+	files, err := fp.Prepare()
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(files)
+	if !slices.Contains(files, "../../testdata/valid_excel.xlsx") {
+		t.Errorf("Prepare() did not return ../../testdata/valid_excel.xlsx")
 	}
 }
