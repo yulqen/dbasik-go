@@ -117,16 +117,41 @@ func contains(slice []string, str string) bool {
 }
 
 type FilePreparer interface {
-	Prepare(filePath string) error
+	Prepare() ([]string, error)
 }
 
-type DirectoryFilePackage struct {
+type FileSource struct {
 	FilePath string
 }
 
+type DirectoryFilePackage struct {
+	FileSource
+}
+
+func PrepareFiles(fp FilePreparer) ([]string, error) {
+	ch := make(chan string, 100)
+
+	go func() {
+		defer close(ch)
+		files, err := fp.Prepare()
+		if err != nil {
+			ch <- err.Error()
+		}
+
+		for _, f := range files {
+			ch <- f
+		}
+	}()
+
+	var files []string
+	for f := range ch {
+		files = append(files, f)
+	}
+
+	return files, nil
+}
+
 func (fp *DirectoryFilePackage) Prepare() ([]string, error) {
-	// return a slice of the files inside the directory pointed to by fh.FilePath
-	// and an error if any
 	files, err := filepath.Glob(fp.FilePath + "/*")
 	if err != nil {
 		return nil, err
@@ -135,12 +160,10 @@ func (fp *DirectoryFilePackage) Prepare() ([]string, error) {
 }
 
 type ZipFilePackage struct {
-	FilePath string
+	FileSource
 }
 
 func (fp *ZipFilePackage) Prepare() ([]string, error) {
-	// return a slice of the files from inside the zip file pointed to by fh.FilePath
-	// and an error if any
 	files, err := zip.OpenReader(fp.FilePath)
 	if err != nil {
 		return nil, err
@@ -153,10 +176,12 @@ func (fp *ZipFilePackage) Prepare() ([]string, error) {
 	return out, nil
 }
 
+// NewDirectoryFilePackage creates a new DirectoryFilePackage object with the given filePath to the directory
 func NewDirectoryFilePackage(filePath string) *DirectoryFilePackage {
-	return &DirectoryFilePackage{FilePath: filePath}
+	return &DirectoryFilePackage{FileSource{FilePath: filePath}}
 }
 
+// NewZipFilePackage creates a new ZipFilePackage object with the given filePath to the zip file
 func NewZipFilePackage(filePath string) *ZipFilePackage {
-	return &ZipFilePackage{FilePath: filePath}
+	return &ZipFilePackage{FileSource{FilePath: filePath}}
 }

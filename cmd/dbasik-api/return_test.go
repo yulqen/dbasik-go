@@ -170,11 +170,10 @@ func TestParseXLSX(t *testing.T) {
 
 func TestPrepareFiles(t *testing.T) {
 	fp := NewDirectoryFilePackage("../../testdata")
-	files, err := fp.Prepare()
+	files, err := PrepareFiles(fp)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(files)
 	if !slices.Contains(files, "../../testdata/valid_excel.xlsx") {
 		t.Errorf("Prepare() did not return ../../testdata/valid_excel.xlsx")
 	}
@@ -182,11 +181,10 @@ func TestPrepareFiles(t *testing.T) {
 
 func TestUnzipFiles(t *testing.T) {
 	fp := NewZipFilePackage("../../testdata/test.zip")
-	files, err := fp.Prepare()
+	files, err := PrepareFiles(fp)
 	if err != nil {
 		t.Error(err)
 	}
-	t.Log(files)
 	if !slices.Contains(files, "valid_excel.xlsx") {
 		t.Errorf("Prepare() did not return test.xlsx")
 	}
