@@ -13,12 +13,13 @@ services:
   app:
     build:
       context: .
+      dockerfile: Dockerfile
     # volumes:
     #   - .:/app
     restart: "unless-stopped"
-    command: "./app"
+    command: "/dlv --listen=:2345 --headless=true --log=true --log-output=debugger,debuglineerr,gdbwire,lldbout,rpc --accept-multiclient --api-version=2 exec ./app"
     ports:
-      - 5000:5000
+      - 2345:2345
     depends_on:
       - db
 volumes:

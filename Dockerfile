@@ -1,10 +1,12 @@
-FROM golang:alpine
+FROM golang:alpine as build
 
-WORKDIR /app
+WORKDIR /
 
-COPY go.mod ./
-RUN go mod download && go mod verify
 COPY . .
-RUN go build -v -o /usr/local/bin/app ./cmd/dbasik-api
-CMD ["app"]
-EXPOSE 5000
+
+RUN go build -o ./app ./cmd/dbasik-api 
+
+FROM scratch
+COPY --from=build /app /app
+COPY --from=build /.env /.env
+CMD ["/app"]

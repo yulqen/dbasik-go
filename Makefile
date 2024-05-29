@@ -4,6 +4,9 @@ build:
 run-container:
 	@docker run -it --rm -p 4000:4000 dbasik:latest
 
+debug:
+	@docker compose -f ./debug/dockerfile-debug up
+
 run:
 	@docker compose up -d
 
