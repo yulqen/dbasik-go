@@ -7,6 +7,18 @@ import (
 	"path/filepath"
 )
 
+type FilePreparer interface {
+	Prepare() ([]string, error)
+}
+
+type FileSource struct {
+	FilePath string
+}
+
+type DirectoryFilePackage struct {
+	FileSource
+}
+
 type ReturnLine struct {
 	Sheet   string
 	CellRef string
@@ -16,6 +28,10 @@ type ReturnLine struct {
 type Return struct {
 	Name        string
 	ReturnLines []ReturnLine
+}
+
+type ZipFilePackage struct {
+	FileSource
 }
 
 // NewReturnLine creates a new ReturnLine object
@@ -106,7 +122,6 @@ func ParseXLSX(filePath string, dm *Datamap) (*Return, error) {
 	return rtn, nil
 }
 
-// contains checks if a slice contains a given string
 func contains(slice []string, str string) bool {
 	for _, s := range slice {
 		if s == str {
@@ -114,18 +129,6 @@ func contains(slice []string, str string) bool {
 		}
 	}
 	return false
-}
-
-type FilePreparer interface {
-	Prepare() ([]string, error)
-}
-
-type FileSource struct {
-	FilePath string
-}
-
-type DirectoryFilePackage struct {
-	FileSource
 }
 
 func PrepareFiles(fp FilePreparer) ([]string, error) {
@@ -157,10 +160,6 @@ func (fp *DirectoryFilePackage) Prepare() ([]string, error) {
 		return nil, err
 	}
 	return files, nil
-}
-
-type ZipFilePackage struct {
-	FileSource
 }
 
 func (fp *ZipFilePackage) Prepare() ([]string, error) {
