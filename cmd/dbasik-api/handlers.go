@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"time"
-
-	"github.com/tealeg/xlsx/v3"
 )
 
 func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,21 +25,31 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 	dmDesc := r.FormValue("description")
 
 	// Get the return file and save it to a file
-	returnFile, handler, err := r.FormFile("returnfile")
+	returnFile, header, err := r.FormFile("returnfile")
 	app.logger.Info("got excel file")
 	if err != nil {
 		http.Error(w, "Missing file", http.StatusBadRequest)
 		return
 	}
 	defer returnFile.Close()
-	dst, err := os.Create(handler.Filename)
+
+	tmpDir, err := ioutil.TempDir("", "dbasik-returns")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer os.RemoveAll(tmpDir) // clean the tempdir up
+
+	dst, err := os.Create(path.Join(tmpDir, header.Filename))
 	if err != nil {
 		http.Error(w, "Cannot create new file object from uplaoded file.", http.StatusInternalServerError)
 		return
 	}
 	defer dst.Close()
-	if _, err := io.Copy(dst, returnFile); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+	// Write the uploaded file to the new file in the tempdir
+	if _, err = io.Copy(dst, returnFile); err != nil {
+		http.Error(w, "cannot copy contents of uploaded file to temporary file", http.StatusInternalServerError)
 		return
 	}
 
@@ -78,24 +88,13 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 	}
 	dm := Datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	// Parse the XLSX file based on the Datamap...
-	// open an existing file
-	wb, err := xlsx.OpenFile(dst.Name())
+	// we can pass the file path to ParseXLSX.
+	ret, err := ParseXLSX(path.Join(tmpDir, header.Filename), &dm)
 	if err != nil {
-		http.Error(w, "Cannot open Excel file", http.StatusBadRequest)
-		return
+		app.serverErrorResponse(w, r, err)
 	}
-	// wb now contains a reference to the workbook
-	// show all the sheets in the workbook
-	fmt.Println("Sheets in this file:")
-	for i, sh := range wb.Sheets {
-		fmt.Println(i, sh.Name)
-	}
-	fmt.Println("----")
 
-	//Here is where we parse our files.
-
-	err = app.writeJSONPretty(w, http.StatusOK, envelope{"Datamap": dm}, nil)
+	err = app.writeJSONPretty(w, http.StatusOK, envelope{"Return": ret}, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		app.serverErrorResponse(w, r, err)
