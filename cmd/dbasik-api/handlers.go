@@ -100,7 +100,7 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 		app.serverErrorResponse(w, r, err)
 	}
 
-	fmt.Fprintf(w, "file successfully uploaded")
+	fmt.Fprintf(w, "file successfully uploaded\n")
 
 }
 
