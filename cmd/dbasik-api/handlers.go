@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -28,12 +27,12 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 	returnFile, header, err := r.FormFile("returnfile")
 	app.logger.Info("got excel file")
 	if err != nil {
-		http.Error(w, "Missing file", http.StatusBadRequest)
+		http.Error(w, "Missing Excel file", http.StatusBadRequest)
 		return
 	}
 	defer returnFile.Close()
 
-	tmpDir, err := ioutil.TempDir("", "dbasik-returns")
+	tmpDir, err := os.MkdirTemp("", "dbasik-returns")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
