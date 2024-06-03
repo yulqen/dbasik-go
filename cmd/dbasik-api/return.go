@@ -3,8 +3,9 @@ package main
 import (
 	"archive/zip"
 	"fmt"
-	"github.com/tealeg/xlsx/v3"
 	"path/filepath"
+
+	"github.com/tealeg/xlsx/v3"
 )
 
 type FilePreparer interface {
