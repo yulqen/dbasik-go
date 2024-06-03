@@ -2,3 +2,4 @@ bin/
 .env
 resources/test.xlsm
 tags
+db.sqlite3
