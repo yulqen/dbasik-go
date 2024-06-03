@@ -16,3 +16,5 @@ migrate:
 migrate-down:
 	docker exec -it dbasik-db-1 migrate -path=${DBASIK_DB_DSN} -database= down
 
+test:
+	go test ./...
