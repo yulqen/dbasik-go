@@ -93,13 +93,13 @@ func (app *application) createReturnHandler(w http.ResponseWriter, r *http.Reque
 		app.serverErrorResponse(w, r, err)
 	}
 
-	err = app.writeJSONPretty(w, http.StatusOK, envelope{"Return": ret}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"return": ret}, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		app.serverErrorResponse(w, r, err)
 	}
 
-	fmt.Fprintf(w, "file successfully uploaded\n")
+	// fmt.Fprintf(w, "file successfully uploaded\n")
 
 }
 
@@ -152,13 +152,13 @@ func (app *application) createDatamapHandler(w http.ResponseWriter, r *http.Requ
 	}
 	dm = Datamap{Name: dmName, Description: dmDesc, Created: time.Now(), DMLs: dmls}
 
-	err = app.writeJSONPretty(w, http.StatusOK, envelope{"Datamap": dm}, nil)
+	err = app.writeJSON(w, http.StatusOK, envelope{"datamap": dm}, nil)
 	if err != nil {
 		app.logger.Debug("writing out csv", "err", err)
 		app.serverErrorResponse(w, r, err)
 	}
 
-	fmt.Fprintf(w, "file successfully uploaded")
+	// fmt.Fprintf(w, "file successfully uploaded")
 }
 
 func (app *application) saveDatamapHandler(w http.ResponseWriter, r *http.Request) {
